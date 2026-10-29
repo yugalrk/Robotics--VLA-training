@@ -10,3 +10,4 @@ pyarrow
 fastdtw==0.3.4
 scipy
 truststore        # only needed behind corporate TLS proxies
+mujoco>=3.2          # sim_mujoco/: laptop-sized FR3 Duo replica for closed-loop eval

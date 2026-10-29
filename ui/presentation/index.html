@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teach the Robot</title>
+<style>
+:root {
+  --bg: #0d1117; --panel: #161b22; --panel2: #1c2330; --line: #2a3340;
+  --text: #e6edf3; --muted: #8b98a8; --accent: #34c0b0; --accent2: #f0a63a; --bad: #e5534b; --good: #3fb950;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono: "Cascadia Code", Consolas, ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
+.slide { position: absolute; inset: 0; display: none; flex-direction: column; padding: 3.2vh 4vw 7vh; }
+.slide.active { display: flex; }
+h1 { font-size: clamp(32px, 5.2vw, 76px); line-height: 1.05; margin: 0 0 2vh; letter-spacing: -0.02em; }
+h2 { font-size: clamp(22px, 2.6vw, 40px); margin: 0 0 .6vh; letter-spacing: -0.01em; }
+.kicker { color: var(--accent); font-weight: 600; font-size: clamp(12px, 1vw, 15px); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1vh; }
+.lead { color: var(--muted); font-size: clamp(15px, 1.35vw, 21px); margin: 0 0 1.6vh; max-width: 75ch; }
+p, li { font-size: clamp(15px, 1.3vw, 20px); line-height: 1.45; }
+li { margin: .5vh 0; }
+b, strong { color: #fff; }
+code { font-family: var(--mono); background: var(--panel2); padding: 1px 6px; border-radius: 4px; font-size: .9em; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4vw; flex: 1; min-height: 0; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6vw; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.8vh 1.4vw; }
+.card h3 { margin: 0 0 .8vh; font-size: clamp(15px, 1.35vw, 21px); }
+.big { font-size: clamp(30px, 3.6vw, 56px); font-weight: 700; color: var(--accent); line-height: 1; }
+.big.warn { color: var(--accent2); } .big.bad { color: var(--bad); } .big.good { color: var(--good); }
+.muted { color: var(--muted); }
+/* demo slides */
+.demohead { display: flex; align-items: flex-end; justify-content: space-between; gap: 2vw; }
+.demohead .lead { margin-bottom: 1.2vh; }
+.frame { flex: 1; min-height: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; position: relative; }
+.frame iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+.frame .off { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column;
+  background: var(--panel); color: var(--muted); text-align: center; padding: 4vw; }
+.frame.down .off { display: flex; }
+.port { white-space: nowrap; font-family: var(--mono); font-size: clamp(12px, 1vw, 15px); color: var(--muted); display: flex; align-items: center; gap: 10px; margin-bottom: 1.4vh; }
+.port a { color: var(--accent); text-decoration: none; border: 1px solid var(--line); padding: 4px 10px; border-radius: 6px; }
+.port a:hover { background: var(--panel2); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.up { background: var(--good); box-shadow: 0 0 8px var(--good); } .dot.down { background: var(--bad); }
+/* loop */
+.loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vw; margin-top: 2vh; }
+.step { background: var(--panel); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 10px; padding: 1.6vh 1vw; }
+.step .n { color: var(--accent); font-weight: 700; font-size: clamp(13px, 1vw, 15px); }
+.step h3 { margin: .4vh 0 .8vh; font-size: clamp(16px, 1.45vw, 22px); }
+.step p { font-size: clamp(13px, 1.05vw, 16px); color: var(--muted); margin: .3vh 0; }
+.step code { font-size: .85em; }
+/* bars */
+table { border-collapse: collapse; width: 100%; font-size: clamp(13px, 1.1vw, 17px); }
+th, td { text-align: left; padding: .9vh .8vw; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; }
+.bar { height: 14px; border-radius: 3px; background: var(--accent); display: inline-block; vertical-align: middle; margin-right: 8px; }
+.bar.b2 { background: var(--accent2); } .bar.b3 { background: #7d8ea3; }
+/* videos */
+.vids { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6vw; flex: 1; min-height: 0; }
+.vid { display: flex; flex-direction: column; min-height: 0; }
+.vid video { width: 100%; flex: 1; min-height: 0; background: #000; border-radius: 10px; border: 1px solid var(--line); object-fit: contain; }
+.vid .cap { margin-top: 1vh; font-size: clamp(14px, 1.15vw, 18px); }
+/* title */
+.title { justify-content: center; }
+.title .sub { font-size: clamp(18px, 1.8vw, 28px); color: var(--muted); max-width: 60ch; }
+.ports { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; margin-top: 4vh; max-width: 1100px; }
+.ports div { font-family: var(--mono); font-size: clamp(12px, 1vw, 15px); color: var(--muted); display: flex; align-items: center; gap: 8px; }
+pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.6vh 1.4vw; font-family: var(--mono);
+  font-size: clamp(12px, 1.05vw, 16px); line-height: 1.5; margin: 0; overflow: auto; color: #c9d4e0; }
+/* nav */
+#nav { position: fixed; left: 0; right: 0; bottom: 0; height: 5vh; min-height: 36px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4vw; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); background: rgba(13,17,23,.92); z-index: 10; }
+#nav button { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 6px; padding: 4px 12px; cursor: pointer; font: inherit; }
+#nav button:hover { background: var(--panel2); }
+#progress { position: fixed; left: 0; bottom: 5vh; height: 3px; background: var(--accent); transition: width .25s; z-index: 11; }
+#toc { display: flex; gap: 4px; }
+#toc span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); cursor: pointer; }
+#toc span.on { background: var(--accent); }
+@media (max-width: 800px) {
+  .grid2, .vids, .loop, .grid3, .ports { grid-template-columns: 1fr; }
+  html, body { overflow: auto; }
+  .slide { overflow: auto; padding: 16px 16px 60px; }
+  .frame { min-height: 70vh; }
+}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide title">
+  <div class="kicker">Siemens Healthineers Hackathon 2026 · Challenge C2</div>
+  <h1>Teach the robot:<br>FR3 Duo box handover</h1>
+  <p class="sub">The whole learning loop, from 84 demonstrations to a served policy behind deploy gates. Every demo in this deck is running live on this laptop.</p>
+  <div class="ports" id="portlist"></div>
+  <p class="muted" style="margin-top:4vh;font-size:14px">← → or Space to move · F for fullscreen · the dots show which demo servers are up</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">The challenge</div>
+  <h2>One loop, five stages, all automated</h2>
+  <p class="lead">A two-arm FR3 Duo must pick a box with the left gripper, hand it to the right gripper and place it on a serving tray. We built every stage of the loop the challenge asks for.</p>
+  <div class="loop">
+    <div class="step"><div class="n">1</div><h3>Ingest</h3><p>LeRobot v3 datasets, AV1 video, 16-D joint state</p><p><code>fr3duo/data.py</code></p><p><code>data_prep/</code></p></div>
+    <div class="step"><div class="n">2</div><h3>Dataset intelligence</h3><p>Sub-task labels + QA, held-out lighting split, FK/IK box-grid augmentation</p><p><code>data_prep/</code> <code>augmentation/</code></p></div>
+    <div class="step"><div class="n">3</div><h3>Fine-tune</h3><p>ACT, SmolVLA, curriculum training, LoRA, crash-safe resume on an 8 GB GPU</p><p><code>training/</code></p></div>
+    <div class="step"><div class="n">4</div><h3>Evaluate</h3><p>Offline metrics, MuJoCo replica, Isaac Sim closed loop</p><p><code>evaluation/</code> <code>sim_mujoco/</code> <code>isaac/</code></p></div>
+    <div class="step"><div class="n">5</div><h3>Version &amp; serve</h3><p>Deploy gates → DEPLOY / MORE TRAINING / HOLD, staging, rollback, HTTP server</p><p><code>serving/</code> <code>ui/pipeline/</code></p></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">1 · Ingest</div>
+  <div class="grid2">
+    <div>
+      <h2>What we were given</h2>
+      <ul>
+        <li><b>84 handover episodes</b>, 30 fps, ~75 s each (LeRobot v3)</li>
+        <li><b>490 cube-stacking episodes</b>, 6 fps, as extra skill data</li>
+        <li>State / action: <b>16 values</b>: 7 joints + gripper, per arm</li>
+        <li><b>3 cameras</b> at 224×224: head, left wrist, right wrist</li>
+        <li>An Isaac Sim scene of the robot, cart, box and tray</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What we found</h2>
+      <div class="card" style="margin-bottom:1.6vh"><div class="big warn">1</div><p style="margin:.6vh 0 0">joint trajectory: all 84 handover episodes follow <b>the same motion</b>. Only the lighting changes.</p></div>
+      <div class="card"><div class="big">10</div><p style="margin:.6vh 0 0">held-out episodes for validation: the 3 darkest, 3 brightest and 4 random lightings (<code>configs/splits.json</code>).</p></div>
+      <p class="muted">So the policy can learn the motion, but not where to reach. That shaped everything after this.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">1 · Ingest · live demo</div><h2>Explore the recorded handover</h2>
+    <p class="lead">Video, joint angles and gripper events of any episode, synced.</p></div>
+    <div class="port"><span class="dot" data-port="8779"></span>:8779/1-data/ <a target="_blank" href="http://127.0.0.1:8779/1-data/">open ↗</a></div></div>
+  <div class="frame" data-port="8779"><iframe data-src="http://127.0.0.1:8779/1-data/" title="data explorer"></iframe><div class="off">Demo server on :8779 is not running.<br>Start everything with <code>python run_local_demo.py</code></div></div>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">2 · Dataset intelligence · live demo</div><h2>Splitting episodes into sub-tasks</h2>
+    <p class="lead">Robot signals only (joint speed + gripper events): <b>pick up → hand over → place</b>. 84/84 handover episodes pass all checks; 1 of 490 cube episodes is flagged.</p></div>
+    <div class="port"><span class="dot" data-port="8780"></span>:8780 <a target="_blank" href="http://127.0.0.1:8780/">open ↗</a></div></div>
+  <div class="frame" data-port="8780"><iframe data-src="http://127.0.0.1:8780/" title="sub-task splitting"></iframe><div class="off">Demo server on :8780 is not running.</div></div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">2 · Dataset intelligence · live demo</div><h2>A robot model we can trust</h2>
+    <p class="lead">Forward kinematics from the scene file. It matches Franka's official FR3v2 description to <b>0.000 mm</b>, so joint angles become gripper positions in the room.</p></div>
+    <div class="port"><span class="dot" data-port="8779"></span>:8779/2-model/ <a target="_blank" href="http://127.0.0.1:8779/2-model/">open ↗</a></div></div>
+  <div class="frame" data-port="8779"><iframe data-src="http://127.0.0.1:8779/2-model/" title="robot model"></iframe><div class="off">Demo server on :8779 is not running.</div></div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">2 · Dataset intelligence</div>
+  <h2>New demonstrations without a new model</h2>
+  <p class="lead">Move the box on a 5 cm grid over the cart. For each cell, shift the recorded gripper path to the new box position and solve inverse kinematics (damped least squares, joint limits, staying close to the recorded joints).</p>
+  <div class="grid3" style="margin-top:2vh">
+    <div class="card"><div class="big good">136</div><h3>reachable cells</h3><p class="muted">each with a full retargeted left-arm trajectory</p></div>
+    <div class="card"><div class="big warn">26</div><h3>out of reach</h3><p class="muted">IK cannot reach the box within the joint limits</p></div>
+    <div class="card"><div class="big bad">58</div><h3>off the cart</h3><p class="muted">the box would not be on the cart top</p></div>
+  </div>
+  <p class="muted" style="margin-top:3vh">Next step: replay these in the simulator, keep the successful ones and record them with camera images as new training data. Details: <code>docs/APPROACH.md</code></p>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">2 · Dataset intelligence · live demo</div><h2>Drag the box, see the new trajectory</h2>
+    <p class="lead">The 136 precomputed trajectories as a lookup table.</p></div>
+    <div class="port"><span class="dot" data-port="8778"></span>:8778/ui/ <a target="_blank" href="http://127.0.0.1:8778/ui/">open ↗</a></div></div>
+  <div class="frame" data-port="8778"><iframe data-src="http://127.0.0.1:8778/ui/" title="box grid"></iframe><div class="off">Demo server on :8778 is not running.</div></div>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">2 · Dataset intelligence · live demo</div><h2>From a camera pixel to a trajectory</h2>
+    <p class="lead">Click the box in the head-camera image → table plane → grid cell → trajectory from the lookup table.</p></div>
+    <div class="port"><span class="dot" data-port="8779"></span>:8779/3-lut/ <a target="_blank" href="http://127.0.0.1:8779/3-lut/">open ↗</a></div></div>
+  <div class="frame" data-port="8779"><iframe data-src="http://127.0.0.1:8779/3-lut/" title="camera to LUT"></iframe><div class="off">Demo server on :8779 is not running.</div></div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">3 · Fine-tune</div>
+  <div class="grid2">
+    <div>
+      <h2>What we trained</h2>
+      <ul>
+        <li><b>ACT</b> on handover only, and on handover + cubes</li>
+        <li><b>SmolVLA</b> (vision-language-action, 450 M) fine-tuned from <code>lerobot/smolvla_base</code></li>
+        <li><b>Curriculum</b>: single-arm skills → bimanual → full task, with rehearsal</li>
+        <li>LoRA, gradient accumulation, crash-safe <code>--resume</code></li>
+        <li>All on an <b>8 GB laptop GPU</b>, ~25 min per run; policies act at 6 Hz in 20-step chunks</li>
+      </ul>
+      <p class="muted">pi0 / pi0.5 need ≥ 24 GB, so they run through the same server protocol on a bigger machine.</p>
+    </div>
+    <div>
+      <h2>Offline accuracy on held-out lighting</h2>
+      <p class="muted" style="margin-top:0">Mean arm joint error, rad (lower is better)</p>
+      <table>
+        <tr><th>Model</th><th>Error</th><th>Gripper events hit</th></tr>
+        <tr><td>SmolVLA</td><td><span class="bar" style="width:calc(0.0149/0.0402*14vw)"></span>0.0149</td><td>92%</td></tr>
+        <tr><td>ACT, handover</td><td><span class="bar b2" style="width:calc(0.0308/0.0402*14vw)"></span>0.0308</td><td>100%</td></tr>
+        <tr><td>ACT, mixed</td><td><span class="bar b3" style="width:14vw"></span>0.0402</td><td>95%</td></tr>
+      </table>
+      <p style="margin-top:2vh">SmolVLA is <b>2× more accurate</b> than ACT, but it depends on the instruction: without it the error rises <b>5×</b> (0.0149 → 0.0746). Adding cube data did not help ACT.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">4 · Evaluate · live demo</div><h2>Where are the grippers, frame by frame?</h2>
+    <p class="lead">Kinematics turns every recorded frame into gripper XYZ, synced with the video and the sub-task labels.</p></div>
+    <div class="port"><span class="dot" data-port="8777"></span>:8777/xyz_verify/ <a target="_blank" href="http://127.0.0.1:8777/xyz_verify/">open ↗</a></div></div>
+  <div class="frame" data-port="8777"><iframe data-src="http://127.0.0.1:8777/xyz_verify/" title="xyz verify"></iframe><div class="off">Demo server on :8777 is not running.</div></div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">4 · Evaluate · closed loop</div><h2>A MuJoCo replica of the scene, on a laptop</h2>
+    <p class="lead">Rebuilt from the Isaac scene file. Link poses match to 0.00 mm, and the recorded demo replays to success. Trained policies don't succeed in it yet.</p></div>
+    <div class="port"><span class="dot" data-port="8777"></span>:8777/mujoco/ <a target="_blank" href="http://127.0.0.1:8777/mujoco/">open ↗</a></div></div>
+  <div class="vids">
+    <div class="vid"><video data-src="http://127.0.0.1:8777/mujoco/replay/replay.mp4" controls muted loop playsinline></video>
+      <div class="cap"><span class="dot up"></span> <b>Recorded demo</b>: box lifted 396 mm, ends resting on the tray (stage 4/4)</div></div>
+    <div class="vid"><video data-src="http://127.0.0.1:8777/mujoco/policy_smolvla_handover/policy_ep01.mp4" controls muted loop playsinline></video>
+      <div class="cap"><span class="dot down"></span> <b>SmolVLA</b>: 0 of 3 episodes. The rendered images differ from the training images, so the policy never reaches the box.</div></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-demo>
+  <div class="demohead"><div><div class="kicker">5 · Version &amp; serve · live demo</div><h2>Pipeline UI: evaluate, decide, deploy</h2>
+    <p class="lead">Every checkpoint goes through offline + simulator evaluation and the gates in <code>configs/deploy_gates.json</code> → <b>DEPLOY / MORE TRAINING / HOLD</b>. Deploys use staging and a health check, with one-click rollback.</p></div>
+    <div class="port"><span class="dot" data-port="8765"></span>:8765 <a target="_blank" href="http://127.0.0.1:8765/">open ↗</a></div></div>
+  <div class="frame" data-port="8765"><iframe data-src="http://127.0.0.1:8765/" title="pipeline ui"></iframe><div class="off">Pipeline UI on :8765 is not running.</div></div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="kicker">5 · Version &amp; serve · live</div>
+  <div class="grid2">
+    <div style="display:flex;flex-direction:column;min-height:0">
+      <h2>The policy server</h2>
+      <p class="lead">One HTTP protocol for every model: <code>GET /info</code>, <code>POST /reset</code>, <code>POST /act</code>. The Isaac Sim scripts, the MuJoCo eval and the pipeline UI all talk to it.</p>
+      <ul>
+        <li><code>--checkpoint</code>: any LeRobot policy (ACT, SmolVLA)</li>
+        <li><code>--trajectory</code>: the recorded handover as a closed-loop lookup (no model)</li>
+        <li><code>serving/fr3duo_pi05_server.py</code>: pi0.5 via openpi in WSL</li>
+        <li>Runs on a different machine than the simulator if needed</li>
+      </ul>
+    </div>
+    <div style="display:flex;flex-direction:column;min-height:0">
+      <div class="port" style="justify-content:flex-end"><span class="dot" data-port="8090"></span>:8090/info <a target="_blank" href="http://127.0.0.1:8090/info">open ↗</a></div>
+      <div class="frame" data-port="8090" style="background:var(--panel)"><iframe data-src="http://127.0.0.1:8090/info" title="policy server info" style="background:#fff"></iframe>
+        <div class="off">Policy server not running.<br>Start with <code>python run_local_demo.py --serve trajectory</code></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <div class="kicker">What we learned</div>
+  <h2>Findings and next steps</h2>
+  <div class="grid2" style="margin-top:1.4vh">
+    <div class="card">
+      <h3>Findings</h3>
+      <ul>
+        <li><b>Data diversity is the bottleneck.</b> One trajectory teaches the motion, not the reach.</li>
+        <li><b>Offline accuracy ≠ closed-loop success.</b> SmolVLA's 0.015 rad error still gives 0/3 in a replica whose images look different.</li>
+        <li><b>The simulator gap is real:</b> the hand-out Isaac scene lacks the recorder's override layers, so even the recorded demo doesn't grasp there. Our MuJoCo replica does replay it.</li>
+        <li>Language-conditioned policies need the exact training instruction.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Next steps</h3>
+      <ul>
+        <li>Replay the 136 box-grid trajectories in simulation, keep the successes, record them with images → <b>new training data</b></li>
+        <li>Fine-tune on simulator-rendered frames to close the visual gap</li>
+        <li>Train pi0.5 on a ≥ 24 GB GPU through the same server</li>
+        <li>Promote models through the gates automatically after each run</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <div class="kicker">Run it yourself</div>
+  <h2>One command, everything local</h2>
+  <div class="grid2" style="margin-top:1.4vh">
+    <pre>python run_local_demo.py                      <span class="muted"># build + start all</span>
+python run_local_demo.py --serve trajectory   <span class="muted"># + policy server</span>
+
+<span class="muted"># the loop, by folder</span>
+fr3duo/        shared code (data, FK, IK, policies)
+data_prep/     ingest, splits, sub-tasks
+augmentation/  box-grid trajectories
+training/      ACT, SmolVLA, curriculum
+evaluation/    offline eval, deploy gates
+sim_mujoco/    MuJoCo replica
+isaac/         Isaac Sim eval
+serving/       policy servers
+ui/            pipeline UI, demos, this deck</pre>
+    <div>
+      <table id="porttable">
+        <tr><th></th><th>Port</th><th>What</th></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div id="progress"></div>
+<div id="nav">
+  <button id="prev">←</button>
+  <div id="toc"></div>
+  <span id="count"></span>
+  <button id="fs">Fullscreen</button>
+  <button id="next">→</button>
+</div>
+
+<script>
+const PORTS = [
+  [8770, "/", "this presentation"],
+  [8765, "/", "pipeline UI"],
+  [8779, "/", "handover explorer"],
+  [8780, "/", "sub-task splitting"],
+  [8778, "/ui/", "box-grid player"],
+  [8777, "/", "results browser"],
+  [8090, "/info", "policy server"],
+];
+const slides = [...document.querySelectorAll(".slide")];
+let cur = 0;
+try { cur = Math.min(slides.length - 1, Math.max(0, parseInt(location.hash.slice(1)) - 1 || 0)); } catch (e) {}
+
+// port list (title) + table (last slide)
+document.getElementById("portlist").innerHTML = PORTS.map(([p, path, name]) =>
+  `<div><span class="dot" data-port="${p}"></span>:${p} ${name}</div>`).join("");
+document.getElementById("porttable").insertAdjacentHTML("beforeend", PORTS.map(([p, path, name]) =>
+  `<tr><td><span class="dot" data-port="${p}"></span></td><td><a style="color:var(--accent)" target="_blank" href="http://127.0.0.1:${p}${path}">:${p}${path}</a></td><td>${name}</td></tr>`).join(""));
+document.getElementById("toc").innerHTML = slides.map((_, i) => `<span data-i="${i}"></span>`).join("");
+document.querySelectorAll("#toc span").forEach(s => s.onclick = () => go(+s.dataset.i));
+
+function load(slide) {  // load embedded demos only when their slide is shown
+  slide.querySelectorAll("[data-src]").forEach(el => { if (!el.getAttribute("src")) el.src = el.dataset.src; });
+}
+function go(i) {
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle("active", k === cur));
+  slides.forEach(s => s.querySelectorAll("video").forEach(v => { if (!s.classList.contains("active")) v.pause(); }));
+  load(slides[cur]);
+  slides[cur].querySelectorAll("video").forEach(v => v.play().catch(() => {}));
+  if (cur + 1 < slides.length) setTimeout(() => load(slides[cur + 1]), 800);  // preload the next one
+  document.getElementById("count").textContent = `${cur + 1} / ${slides.length}`;
+  document.getElementById("progress").style.width = `${(cur + 1) / slides.length * 100}%`;
+  document.querySelectorAll("#toc span").forEach((s, k) => s.classList.toggle("on", k === cur));
+  history.replaceState(null, "", "#" + (cur + 1));
+}
+document.getElementById("prev").onclick = () => go(cur - 1);
+document.getElementById("next").onclick = () => go(cur + 1);
+document.getElementById("fs").onclick = toggleFs;
+function toggleFs() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); }
+document.addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+  else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+  else if (e.key === "Home") go(0);
+  else if (e.key === "End") go(slides.length - 1);
+  else if (e.key === "f" || e.key === "F") toggleFs();
+});
+
+// live status of every demo server (no-cors: any answer = up, network error = down)
+async function check(port) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
+  try { await fetch(`http://127.0.0.1:${port}/`, { mode: "no-cors", cache: "no-store", signal: ctl.signal }); return true; }
+  catch (e) { return false; } finally { clearTimeout(t); }
+}
+async function refresh() {
+  for (const [p] of PORTS) {
+    const up = p === 8770 ? true : await check(p);
+    document.querySelectorAll(`.dot[data-port="${p}"]`).forEach(d => { d.classList.toggle("up", up); d.classList.toggle("down", !up); });
+    document.querySelectorAll(`.frame[data-port="${p}"]`).forEach(f => f.classList.toggle("down", !up));
+  }
+}
+refresh(); setInterval(refresh, 5000);
+go(cur);
+</script>
+</body>
+</html>

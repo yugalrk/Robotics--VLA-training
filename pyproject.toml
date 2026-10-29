@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fr3duo"
+version = "0.1.0"
+description = "FR3 Duo handover: data, training, evaluation and serving (Siemens Healthineers Hackathon 2026, C2)"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+packages = ["fr3duo"]
